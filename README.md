@@ -1,7 +1,5 @@
 # rhino-toolbar-installer
-Generic installer for adding toolbars to Rhino
-
----
+*Generic installer for adding repository-based toolbars to Rhino.*
 
 **How to use:**
 
