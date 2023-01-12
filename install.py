@@ -5,12 +5,12 @@ Objectives:
     
 0)  Load a rhinoToolbarsConfig.json
 
-1)  Add the path to our hdm.rui to a rhino version specific xml file.
+1)  Add the path to a .rui to a rhino version specific xml file.
     Rhino will load whatever rui's are specified in the xml.
     In Rhino:
         File>Properties>Toolbars>Files
 
-2)  Add the path to our hdmrhinolib to a rhino-version specific xml file.
+2)  Add the path to a lib to a rhino-version specific xml file.
     Rhino will load the specified module and make it availabe in the python execution environment (or python editor) - make more precise.
     In Rhino:
         EditPythonScript>Tools>Options>Modules Search Paths
@@ -120,14 +120,14 @@ def xml_add_settings_lib(tag, filepath, new_path):
     xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
     return True
     
-def xml_write_lib(ironPythonXML):
+def xml_write_lib(ironPythonXML, default_search_path):
     # Default pythonlib xml
     pythonlib_xml = '<?xml version="1.0" encoding="utf-8"?>\n\
     <settings id="2.0">\n\t\
         <settings>\n\t\t\
-            <entry key="SearchPaths">C:\HdM-DT\HdmRhinoToolbar\lib</entry>\n\t\
+            <entry key="SearchPaths">{}</entry>\n\t\
         </settings>\n\
-    </settings>'
+    </settings>'.format(default_search_path)
 
     print ("install.xml_write_lib / SUCCESS: First run. Lib xml created.")
 
@@ -136,14 +136,15 @@ def xml_write_lib(ironPythonXML):
     f.close()
 
 def install(config):
-    print("install.install / INFO: Intalling HdmRhinoToolbar...")
+    print("install.install / INFO: Intalling RhinoToolbar...")
     for version in config['rhinoVersionPaths']:
+        toolbars = version['toolbars']
         toolbarsXMLdir = os.path.join(os.getenv('APPDATA'), version['toolbarsXMLdir'])
         toolbarsXML = os.path.expandvars(toolbarsXMLdir + '/settings-Scheme__Default.xml')
         if not os.path.isfile(toolbarsXML):
             print ("install.install / WARNING: Rhino never started. Toolbar not installed.")
         else:
-            for toolbar in version['toolbars']:
+            for toolbar in toolbars:
                 if xml_add_settings_toolbar(
                     "RuiFiles", toolbarsXML, toolbar['rui']):
                     print("install.install_toolbar / SUCCESS: Modified rhino rui xml.")
@@ -158,10 +159,9 @@ def install(config):
             os.makedirs(ironPythonXMLdir)
 
         if not os.path.isfile(ironPythonXML):
-            xml_write_lib(ironPythonXML)
-                # return True
+            xml_write_lib(ironPythonXML, default_search_path=toolbars[0]['lib'])
 
-        for toolbar in version['toolbars']:
+        for toolbar in toolbars:
             lib_settings = xml_add_settings_lib(
                 "SearchPaths", ironPythonXML, toolbar['lib'])
             if lib_settings:
