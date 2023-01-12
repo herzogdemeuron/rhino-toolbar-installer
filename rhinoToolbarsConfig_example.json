@@ -1,2 +1,2 @@
 {"rhinoVersionPaths": [{"toolbarsXML": "McNeel/Rhinoceros/7.0/Plug-ins/Toolbars (dc297053-96c0-4883-a688-8326b4e024a8)/settings", "ironPythonXML": "McNeel/Rhinoceros/7.0/Plug-ins/IronPython (814d908a-e25c-493d-97e9-ee3861957f49)/settings"}],
-  "toolbars": [{"lib": "path/to/example1/lib", "rui": "path/to/example1/toolbar/example1.rui"}, {"lib": "path/to/example2/lib", "rui": "path/to/example2/toolbar/example2.rui"}]}
+  "toolbars": [{"lib": "path\to\example1\lib", "rui": "path\to\example1\toolbar\example1.rui"}, {"lib": "path\to\example2\lib", "rui": "path\to\example2\toolbar\example2.rui"}]}
