@@ -129,11 +129,9 @@ def xml_write_lib(ironPythonXML, default_search_path):
         </settings>\n\
     </settings>'.format(default_search_path)
 
-    print ("install.xml_write_lib / SUCCESS: First run. Lib xml created.")
-
-    f = open(ironPythonXML, 'w')
-    f.write(pythonlib_xml)
-    f.close()
+    with open(ironPythonXML, 'w') as f:
+        f.write(pythonlib_xml)
+        print ("install.xml_write_lib / SUCCESS: First run. Lib xml created.")
 
 def install(config):
     print("install.install / INFO: Intalling RhinoToolbar...")
