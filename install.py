@@ -27,6 +27,7 @@ import os
 import xml.etree.ElementTree as ET 
 from pathlib import Path
 import json
+import logging
 
 
 def load_config():
@@ -38,16 +39,26 @@ def load_config():
     return config
 
 def xml_add_settings_toolbar(tag, filepath, new_path):
+    """
+    Add a new value to an xml file under a specific tag.
+
+    Args:
+        tag (str): The name of the tag to add the new value to.
+        filepath (str): The path to the xml file.
+        new_path (str): The value to be added to the xml file.
+
+    Returns:
+        bool: Return True if the new value is added successfully and False otherwise.
+    """
     #enter xml file
     try:
         xmlTree = ET.parse(filepath)
     except:
-        print ("install.xml_add_settings_toolbar / ERROR: Parse error! Contact DT")
+        logging.info("install.xml_add_settings_toolbar / Parse error!")
         return False
-    xmlRoot = xmlTree.getroot()
-    newitems = []
 
     #test if tag exists in xml file
+    xmlRoot = xmlTree.getroot()
     entryMatch = None
     for element in xmlRoot.findall("./settings"):
         childs = list(element)
@@ -59,60 +70,68 @@ def xml_add_settings_toolbar(tag, filepath, new_path):
     
     # return false if not found
     if entryMatch == None:
-        print ("install.xml_add_settings_toolbar / INFO: " + tag + " not found in xml file.")
+        logging.info("install.xml_add_settings_toolbar / " + tag + " not found in xml file.")
         return False
     
     # enter list and values of tag entry
-
     values = list(entryMatch[0])
     for value in values:
         # check if path already exists in xml file
         if value.text == new_path:
-            print ("install.xml_add_settings_toolbar / SUCCESS: Xml toolbar already installed.")
+            logging.info("install.xml_add_settings_toolbar / Xml toolbar already installed.")
             return False
 
     # add new value to xml file
     newValue = ET.Element("value")
     newValue.text = new_path
-        
     newValue = entryMatch[0].append(newValue)
 
     xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
     return True
 
 def xml_add_settings_lib(tag, filepath, new_path):
+    """
+    Add a new value to an xml file under a specific tag or create a new tag if it doesn't exist.
+
+    Args:
+        tag (str): The name of the tag to add the new value to or the name of the tag to be created.
+        filepath (str): The path to the xml file.
+        new_path (str): The value to be added to the xml file.
+
+    Returns:
+        bool: Return True if the new value is added successfully and False otherwise.
+    """
     #enter xml file
     try:
         xmlTree = ET.parse(filepath)
     except:
-        print ("install.xml_add_settings_lib / ERROR: Parse error! Contact DT")
+        logging.error("install.xml_add_settings_lib / Parse error!")
         return False
-    xmlRoot = xmlTree.getroot()
-    newitems = []
 
     #test if tag exists in xml file
+    xmlRoot = xmlTree.getroot()
     entryMatch = None
     for element in xmlRoot.findall("./settings"):
         entries = list(element)
         for entry in entries:
             if entry.items()[0][1] == tag:
                 entryMatch = entry
+
     # if the xml entry is not found, creates new xml entry
     if entryMatch == None:
-        print ("install.xml_add_settings_lib / INFO: " + tag + " not found in xml file")
+        logging.info("install.xml_add_settings_lib / " + tag + " not found in xml file")
         newValue = ET.Element("entry", {"key":tag})
         newValue.text = new_path
         element.append(newValue)
-        print ("install.xml_add_settings_lib / INFO: " + tag + " entry created")
+        logging.info("install.xml_add_settings_lib / " + tag + " entry created")
         xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
         return True
     
     # write lib path to xml file
     if entryMatch.text == None:
         entryMatch.text = new_path
-    
     elif new_path in entryMatch.text:
-        print ("install.xml_add_settings_lib / SUCCESS: Xml lib already installed.")
+        logging.info("install.xml_add_settings_lib / Xml lib already installed.")
         return False
     else:
         entryMatch.text += ";" + new_path
@@ -121,6 +140,16 @@ def xml_add_settings_lib(tag, filepath, new_path):
     return True
     
 def xml_write_lib(ironPythonXML, default_search_path):
+    """
+    Writes a new xml file with specific values.
+
+    Args:
+        ironPythonXML (str): The path of the xml file to be written.
+        default_search_path (str): The value to be written in the xml file.
+
+    Returns:
+        None
+    """
     # Default pythonlib xml
     pythonlib_xml = '<?xml version="1.0" encoding="utf-8"?>\n\
     <settings id="2.0">\n\t\
@@ -131,28 +160,42 @@ def xml_write_lib(ironPythonXML, default_search_path):
 
     with open(ironPythonXML, 'w') as f:
         f.write(pythonlib_xml)
-        print ("install.xml_write_lib / SUCCESS: First run. Lib xml created.")
+        logging.info("install.xml_write_lib / First run. Lib xml created.")
 
 def install(config):
-    print("install.install / INFO: Intalling RhinoToolbar...")
+    """
+    Installs RhinoToolbars by modifying xml files.
+    Specify the toolbars and xml files in a json configuration. See this repo's README for further information. 
+    
+    Args:
+        config (dict): A dictionary containing the version paths and toolbars information.
+    
+    Returns:
+        None
+    """
+    logging.info("install.install / Installing RhinoToolbar...")
+
     for version in config['rhinoVersionPaths']:
+
         toolbars = version['toolbars']
         toolbarsXMLdir = os.path.join(os.getenv('APPDATA'), version['toolbarsXMLdir'])
         toolbarsXML = os.path.expandvars(toolbarsXMLdir + '/settings-Scheme__Default.xml')
+
+        ironPythonXMLdir = os.path.join(os.getenv('APPDATA'), version['ironPythonXMLdir'])
+        ironPythonXML = os.path.expandvars(ironPythonXMLdir + '/settings-Scheme__Default.xml')
+
         if not os.path.isfile(toolbarsXML):
-            print ("install.install / WARNING: Rhino never started. Toolbar not installed.")
+            logging.warning("No toolbar xml detected, Rhino never started. Toolbar not installed.")
         else:
             for toolbar in toolbars:
                 if xml_add_settings_toolbar(
                     "RuiFiles", toolbarsXML, toolbar['rui']):
-                    print("install.install_toolbar / SUCCESS: Modified rhino rui xml.")
+                    logging.info("install.install / Modified rhino rui xml.")
                 else:
-                    print("install.install_toolbar / INFO: No changes made to toolbar xml.")
+                    logging.info("install.install / No changes made to toolbar xml.")
 
-        ironPythonXMLdir = os.path.join(os.getenv('APPDATA'), version['ironPythonXMLdir'])
-        ironPythonXML = os.path.expandvars(ironPythonXMLdir + '/settings-Scheme__Default.xml')
         if os.path.exists(ironPythonXMLdir):
-            print("install.install_lib / INFO: xml folder path exists.")
+            logging.info("install.install / xml folder path already exists.")
         else:
             os.makedirs(ironPythonXMLdir)
 
@@ -163,12 +206,13 @@ def install(config):
             lib_settings = xml_add_settings_lib(
                 "SearchPaths", ironPythonXML, toolbar['lib'])
             if lib_settings:
-                print ("install.install_lib / INFO: lib path added.")
-                print("install.install_lib / SUCCESS: Modified rhino python xml.")
+                logging.info("install.install / Modified rhino python xml, lib path added.")
             else:
-                print ("install.install_lib / INFO: No changes made to lib xml.")
+                logging.info("install.install / No changes made to lib xml.")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename='install.log', level=logging.INFO,
+                        format='%(asctime)s %(levelname)s %(message)s')
     config = load_config()
     install(config)
