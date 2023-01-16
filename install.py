@@ -198,9 +198,10 @@ def install(config):
                     "RuiFiles", toolbarsXML, toolbar['rui'])
 
         if os.path.exists(ironPythonXMLdir):
-            logging.info("install.install / xml folder path already exists.")
+            logging.info("install.install / IronPython xml folder path already exists.")
         else:
             os.makedirs(ironPythonXMLdir)
+            logging.info("install.install / Added ironPython xml folder.")
 
         if not os.path.isfile(ironPythonXML):
             xml_write_lib(ironPythonXML, default_search_path=toolbars[0]['lib'])
