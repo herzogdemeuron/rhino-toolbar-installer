@@ -89,7 +89,7 @@ def xml_add_settings_toolbar(tag, filepath, new_path):
     newValue = entryMatch[0].append(newValue)
 
     xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
-    logging.info("install.install / Inserted '{}' into rhino rui xml.".format(new_path))
+    logging.info("install.xml_add_settings_toolbar / Inserted '{}' into rhino rui xml.".format(new_path))
     return
 
 def xml_add_settings_lib(tag, filepath, new_path):
