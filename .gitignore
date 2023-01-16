@@ -1,0 +1,9 @@
+.vscode/*
+.idea/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+dev_mode.txt
+install.log
+
