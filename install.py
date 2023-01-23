@@ -38,6 +38,30 @@ def load_config():
 
     return config
 
+def write_config(config):
+    path = Path(os.getcwd())
+    with open(os.path.join(path, 'rhinoToolbarsConfig.json'), 'w') as f:
+        json.dumps(config)
+
+def collect_ruis(search_dir):
+    ruis = []
+    for files in next(os.walk(search_dir))[2]:
+        for file in files:
+            if file.endswith('.rui'):
+                ruis.append(file)
+
+    return ruis
+
+def collect_libs(search_dir):
+    libs = []
+    for root, dirs, files in os.walk(search_dir):
+        for directory in dirs:
+            if directory == 'lib':
+                libs.append(os.path.join(root, directory))
+    
+    return libs
+
+
 def xml_add_settings_toolbar(tag, filepath, new_path):
     """
     Add a new value to an xml file under a specific tag.
@@ -92,14 +116,15 @@ def xml_add_settings_toolbar(tag, filepath, new_path):
     logging.info("install.xml_add_settings_toolbar / Inserted '{}' into rhino rui xml.".format(new_path))
     return
 
-def xml_add_settings_lib(tag, filepath, new_path):
+def xml_add_settings_lib(tag, filepath, new_paths, remove_paths=None):
     """
     Add a new value to an xml file under a specific tag or create a new tag if it doesn't exist.
 
     Args:
         tag (str): The name of the tag to add the new value to or the name of the tag to be created.
         filepath (str): The path to the xml file.
-        new_path (str): The value to be added to the xml file.
+        new_paths (list[str]): The values to be added to the xml file.
+        remove_paths (list[str]): The values to be removed from the xml file.
 
     Returns:
         bool: Return True if the new value is added successfully and False otherwise.
@@ -125,24 +150,24 @@ def xml_add_settings_lib(tag, filepath, new_path):
     if entryMatch == None:
         logging.info("install.xml_add_settings_lib / " + tag + " not found in xml file")
         newValue = ET.Element("entry", {"key":tag})
-        newValue.text = new_path
+        newValue.text = ';'.join(new_paths)
         element.append(newValue)
         xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
         logging.info("install.xml_add_settings_lib / " + tag + " entry created")
         return
     
     # write lib path to xml file
-    if entryMatch.text == None:
-        entryMatch.text = new_path
-    elif new_path in entryMatch.text:
-        logging.info("install.xml_add_settings_lib / '{}' already in ironPython libs xml.".format(new_path))
-        logging.info("install.xml_add_settings_lib / No changes made to ironPython lib xml.")
-        return
+    if entryMatch.text != None:
+        search_paths = set(entryMatch.text.split(';'))
+        if remove_paths:
+            search_paths = search_paths - set(remove_paths)
+        search_paths = search_paths | set(new_paths)
     else:
-        entryMatch.text += ";" + new_path
+        search_paths = new_paths
 
+    entryMatch.text = ';'.join(search_paths)
     xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
-    logging.info("install.xml_add_settings_lib / Inserted '{}' into ironPython lib xml.".format(new_path))
+    logging.info("install.xml_add_settings_lib / SearchPaths modified")
     return
     
 def xml_write_lib(ironPythonXML, default_search_path):
@@ -180,6 +205,8 @@ def install(config):
         None
     """
     logging.info("install.install / Installing RhinoToolbar...")
+    new_libs = collect_libs(Path(os.getcwd()))
+    remove_libs = config.get('libs', None)
 
     for version in config['rhinoVersionPaths']:
 
@@ -204,11 +231,16 @@ def install(config):
             logging.info("install.install / Added ironPython xml folder.")
 
         if not os.path.isfile(ironPythonXML):
+            # rework this ------------------------------------------------------------------------------------------------------------------------------------------
             xml_write_lib(ironPythonXML, default_search_path=toolbars[0]['lib'])
 
-        for toolbar in toolbars:
-            xml_add_settings_lib(
-                "SearchPaths", ironPythonXML, toolbar['lib'])
+        xml_add_settings_lib(
+            "SearchPaths", ironPythonXML, new_libs, remove_libs)
+    
+    config['lib'] = new_libs
+    write_config(config)
+
+
 
 
 if __name__ == "__main__":
