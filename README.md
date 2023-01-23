@@ -3,7 +3,7 @@
 
 **How to use:**
 
-Clone this repo into C:\HdM-DT\RhinoToolbarExtensions. This is the mandatory location for all HdM Rhino repositories. RUI files rely on absolute paths to call python scripts.
+Clone this repo into C:\HdM-DT\RhinoToolbarExtensions. This is the mandatory location for all HdM Rhino repositories. RUI files rely on absolute paths to call python scripts. Clone all HdM Rhino extensions into the same directory.
 
 Place a 'rhinoToolbarsConfig.json' in the parent directory of this repo. See the 'rhinoToolbarsConfig_example.json' for reference. Pay attention to the use for '/' vs. '\\'.
 
