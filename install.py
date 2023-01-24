@@ -44,6 +44,15 @@ def write_config(config):
         json.dumps(config)
 
 def collect_ruis(search_dir):
+    """
+    Searches for all files ending with '.rui' in give directory tree.
+
+    Args:
+        search_dir (str): The root directory to start searching from.
+
+    Returns:
+        list[str]: A list of file paths.
+    """
     ruis = []
     for files in next(os.walk(search_dir))[2]:
         for file in files:
@@ -53,10 +62,20 @@ def collect_ruis(search_dir):
     return ruis
 
 def collect_libs(search_dir):
+    """
+    Searches for all 'lib' folders in given directory tree.
+    Ignores directories that to not have 'rhino' in their path.
+
+    Args:
+        search_dir (str): The root dir to start searching from.
+
+    Returns:
+        list[str]: A list of directories.
+    """
     libs = []
     for root, dirs, files in os.walk(search_dir):
         for directory in dirs:
-            if directory == 'lib':
+            if 'rhino' in root.lower() and directory == 'lib':
                 libs.append(os.path.join(root, directory))
     
     return libs
@@ -231,8 +250,7 @@ def install(config):
             logging.info("install.install / Added ironPython xml folder.")
 
         if not os.path.isfile(ironPythonXML):
-            # rework this ------------------------------------------------------------------------------------------------------------------------------------------
-            xml_write_lib(ironPythonXML, default_search_path=toolbars[0]['lib'])
+            xml_write_lib(ironPythonXML, default_search_path=new_libs[0])
 
         xml_add_settings_lib(
             "SearchPaths", ironPythonXML, new_libs, remove_libs)
