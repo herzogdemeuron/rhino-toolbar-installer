@@ -30,18 +30,16 @@ import json
 import logging
 
 
-def load_config():
-    path = Path(os.getcwd())
-    logging.info("Looking for config json in current working dir: {}".format(path))
-    with open(os.path.join(path, 'rhinoToolbarsConfig.json'), 'r') as f:
+def load_config(directory):
+    logging.info("Looking for config json in current working dir: {}".format(directory))
+    with open(os.path.join(directory, 'rhinoToolbarsConfig.json'), 'r') as f:
         config = json.load(f)
 
     return config
 
-def write_config(config):
-    path = Path(os.getcwd())
-    with open(os.path.join(path, 'rhinoToolbarsConfig.json'), 'w') as f:
-        json.dumps(config)
+def write_config(directory, config):
+    with open(os.path.join(directory, 'rhinoToolbarsConfig.json'), 'w') as f:
+        f.write(json.dumps(config))
 
 def collect_ruis(search_dir):
     """
@@ -54,10 +52,10 @@ def collect_ruis(search_dir):
         list[str]: A list of file paths.
     """
     ruis = []
-    for files in next(os.walk(search_dir))[2]:
+    for root, dirs, files in os.walk(search_dir):
         for file in files:
-            if file.endswith('.rui'):
-                ruis.append(file)
+            if file.endswith(".rui"):
+                ruis.append(os.path.join(root, file))
 
     return ruis
 
@@ -81,7 +79,7 @@ def collect_libs(search_dir):
     return libs
 
 
-def xml_add_settings_toolbar(tag, filepath, new_path):
+def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
     """
     Add a new value to an xml file under a specific tag.
 
@@ -111,28 +109,23 @@ def xml_add_settings_toolbar(tag, filepath, new_path):
                 if entry.items()[0][1] == tag:
                     entryMatch = entry
     
-    # return if not found
-    if entryMatch == None:
-        logging.info("install.xml_add_settings_toolbar / " + tag + " not found in xml file.")
-        logging.info("install.xml_add_settings_toolbar / No changes made to toolbar xml.")
+    if entryMatch != None:
+        ruis = set(value.text for value in entryMatch[0])
+        if remove_ruis:
+            ruis = ruis - set(remove_ruis)
+        ruis = ruis | set(new_ruis)
+    else:
+        logging.info("install.xml_add_settings_toolbar / No entry '{}' found. No changes made to toolbar xml.".format(tag))
         return
-    
-    # enter list and values of tag entry
-    values = list(entryMatch[0])
-    for value in values:
-        # check if path already exists in xml file
-        if value.text == new_path:
-            logging.info("install.xml_add_settings_toolbar / '{}' already in toolbar xml.".format(new_path))
-            logging.info("install.xml_add_settings_toolbar / No changes made to toolbar xml.")
-            return
 
+    entryMatch[0].clear()
     # add new value to xml file
-    newValue = ET.Element("value")
-    newValue.text = new_path
-    newValue = entryMatch[0].append(newValue)
+    for rui in ruis:
+        newValue = ET.Element("value")
+        newValue.text = rui
+        newValue = entryMatch[0].append(newValue)
 
     xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
-    logging.info("install.xml_add_settings_toolbar / Inserted '{}' into rhino rui xml.".format(new_path))
     return
 
 def xml_add_settings_lib(tag, filepath, new_paths, remove_paths=None):
@@ -212,24 +205,30 @@ def xml_write_lib(ironPythonXML, default_search_path):
         f.write(pythonlib_xml)
         logging.info("install.xml_write_lib / First run. Lib xml created.")
 
-def install(config):
+def install(config, search_dir):
     """
     Installs RhinoToolbars by modifying xml files.
-    Specify the toolbars and xml files in a json configuration. See this repo's README for further information. 
+    See this repo's README for further information. 
     
     Args:
-        config (dict): A dictionary containing the version paths and toolbars information.
+        config (dict): A dictionary containing the version paths, libs and toolbars information.
     
     Returns:
         None
     """
     logging.info("install.install / Installing RhinoToolbar...")
-    new_libs = collect_libs(Path(os.getcwd()))
+    new_libs = collect_libs(search_dir)
+    logging.info("install.install / New Libs: {}".format(new_libs))
     remove_libs = config.get('libs', None)
+    if remove_libs:
+        logging.info("install.install / Remove Libs: {}".format(remove_libs))
+    new_ruis = collect_ruis(search_dir)
+    logging.info("install.install / New Ruis: {}".format(new_ruis))
+    remove_ruis = config.get('ruis', None)
+    if remove_ruis:
+        logging.info("install.install / Remove Ruis: {}".format(remove_ruis))
 
     for version in config['rhinoVersionPaths']:
-
-        toolbars = config['toolbars']
         toolbarsXMLdir = os.path.join(os.getenv('APPDATA'), version['toolbarsXMLdir'])
         toolbarsXML = os.path.expandvars(toolbarsXMLdir + '/settings-Scheme__Default.xml')
 
@@ -239,9 +238,8 @@ def install(config):
         if not os.path.isfile(toolbarsXML):
             logging.warning("No toolbar xml detected, Rhino never started. Toolbar not installed.")
         else:
-            for toolbar in toolbars:
-                xml_add_settings_toolbar(
-                    "RuiFiles", toolbarsXML, toolbar['rui'])
+            xml_add_settings_toolbar(
+                "RuiFiles", toolbarsXML, new_ruis, remove_ruis)
 
         if os.path.exists(ironPythonXMLdir):
             logging.info("install.install / IronPython xml folder path already exists.")
@@ -255,15 +253,18 @@ def install(config):
         xml_add_settings_lib(
             "SearchPaths", ironPythonXML, new_libs, remove_libs)
     
-    config['lib'] = new_libs
-    write_config(config)
+    config['libs'] = new_libs
+    config['ruis'] = new_ruis
 
-
+    return config
 
 
 if __name__ == "__main__":
     logging.basicConfig(filename='install.log', level=logging.INFO,
                         format='%(asctime)s %(levelname)s %(message)s')
     logging.info('=====================')
-    config = load_config()
-    install(config)
+    cwd = os.getcwd()
+    parent_dir = os.path.dirname(os.getcwd())
+    config = load_config(cwd)
+    config = install(config, parent_dir)
+    write_config(cwd, config)
