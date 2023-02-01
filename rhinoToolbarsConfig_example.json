@@ -1,8 +1,0 @@
-{
-  "rhinoVersionPaths": [
-    {
-      "toolbarsXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/Toolbars (dc297053-96c0-4883-a688-8326b4e024a8)/settings",
-      "ironPythonXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/IronPython (814d908a-e25c-493d-97e9-ee3861957f49)/settings"
-    }
-  ]
-}
