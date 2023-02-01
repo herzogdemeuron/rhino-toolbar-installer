@@ -25,16 +25,25 @@ Step by step:
 """
 import os
 import xml.etree.ElementTree as ET 
-from pathlib import Path
 import json
 import logging
 
 
 def load_config(directory):
     logging.info("Looking for config json in current working dir: {}".format(directory))
-    with open(os.path.join(directory, 'rhinoToolbarsConfig.json'), 'r') as f:
-        config = json.load(f)
+    config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
+    if os.path.isfile(config_path):
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+    else:
+        config = {}
 
+    config[ "rhinoVersionPaths"] =  [
+        {
+        "toolbarsXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/Toolbars (dc297053-96c0-4883-a688-8326b4e024a8)/settings",
+        "ironPythonXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/IronPython (814d908a-e25c-493d-97e9-ee3861957f49)/settings"
+        }
+    ]
     return config
 
 def write_config(directory, config):
