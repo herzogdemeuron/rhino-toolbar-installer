@@ -3,7 +3,7 @@ Objectives:
     
     Add or edit two xml files.
     
-0)  Load a rhinoToolbarsConfig.json
+0)  Load a rhinoToolbarsConfig.json that contains libs and ruis previously added to xmls with this installer.
 
 1)  Add the path to a .rui to a rhino version specific xml file.
     Rhino will load whatever rui's are specified in the xml.
@@ -30,7 +30,6 @@ import logging
 
 
 def load_config():
-    # logging.info("Looking for config json in current working dir: {}".format(directory))
     config_path = 'rhinoToolbarsConfig.json'
     if os.path.isfile(config_path):
         with open(config_path, 'r') as f:
@@ -90,12 +89,14 @@ def collect_libs(search_dir):
 
 def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
     """
-    Add a new value to an xml file under a specific tag.
+    Add new values to an xml file under a specific tag.
+    Performs boolean operations on the remove_ruis vs new_ruis to figure out which entries to keep, remove or add.
 
     Args:
         tag (str): The name of the tag to add the new value to.
         filepath (str): The path to the xml file.
-        new_path (str): The value to be added to the xml file.
+        new_ruis (list[str]): The values to be added to the xml file.
+        remove_ruis (list[str]): The values to remove before adding new ones to the xml file.
 
     Returns:
         bool: Return True if the new value is added successfully and False otherwise.
@@ -139,13 +140,14 @@ def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
 
 def xml_add_settings_lib(tag, filepath, new_paths, remove_paths=None):
     """
-    Add a new value to an xml file under a specific tag or create a new tag if it doesn't exist.
+    Add new values to an xml file under a specific tag or create a new tag if it doesn't exist.
+    Performs boolean operations on the remove_paths vs new_paths to figure out which entries to keep, remove or add.
 
     Args:
         tag (str): The name of the tag to add the new value to or the name of the tag to be created.
         filepath (str): The path to the xml file.
         new_paths (list[str]): The values to be added to the xml file.
-        remove_paths (list[str]): The values to be removed from the xml file.
+        remove_paths (list[str], optional): The values to be removed from the xml file before adding new ones.
 
     Returns:
         bool: Return True if the new value is added successfully and False otherwise.
@@ -198,9 +200,6 @@ def xml_write_lib(ironPythonXML, default_search_path):
     Args:
         ironPythonXML (str): The path of the xml file to be written.
         default_search_path (str): The value to be written in the xml file.
-
-    Returns:
-        None
     """
     # Default pythonlib xml
     pythonlib_xml = '<?xml version="1.0" encoding="utf-8"?>\n\
@@ -221,9 +220,6 @@ def install(config, search_dir):
     
     Args:
         config (dict): A dictionary containing the version paths, libs and toolbars information.
-    
-    Returns:
-        None
     """
     logging.info("install.install / Installing RhinoToolbar...")
     new_libs = collect_libs(search_dir)
