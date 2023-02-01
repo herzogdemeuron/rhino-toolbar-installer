@@ -29,9 +29,9 @@ import json
 import logging
 
 
-def load_config(directory):
-    logging.info("Looking for config json in current working dir: {}".format(directory))
-    config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
+def load_config():
+    # logging.info("Looking for config json in current working dir: {}".format(directory))
+    config_path = 'rhinoToolbarsConfig.json'
     if os.path.isfile(config_path):
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -46,8 +46,8 @@ def load_config(directory):
     ]
     return config
 
-def write_config(directory, config):
-    with open(os.path.join(directory, 'rhinoToolbarsConfig.json'), 'w') as f:
+def write_config(config):
+    with open('rhinoToolbarsConfig.json', 'w') as f:
         f.write(json.dumps(config))
 
 def collect_ruis(search_dir):
@@ -274,6 +274,7 @@ if __name__ == "__main__":
     logging.info('=====================')
     cwd = os.getcwd()
     parent_dir = os.path.dirname(os.getcwd())
-    config = load_config(cwd)
-    config = install(config, parent_dir)
-    write_config(cwd, config)
+    parent2_dir = os.path.dirname(parent_dir)
+    config = load_config()
+    config = install(config, parent2_dir)
+    write_config(config)
