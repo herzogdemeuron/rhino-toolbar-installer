@@ -30,7 +30,7 @@ import logging
 
 
 def load_config():
-    config_path = 'rhinoToolbarsConfig.json'
+    config_path = './rhinoToolbarsConfig.json'
     if os.path.isfile(config_path):
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -46,7 +46,7 @@ def load_config():
     return config
 
 def write_config(config):
-    with open('rhinoToolbarsConfig.json', 'w') as f:
+    with open('./rhinoToolbarsConfig.json', 'w') as f:
         f.write(json.dumps(config))
 
 def collect_ruis(search_dir):
@@ -268,9 +268,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename='install.log', level=logging.INFO,
                         format='%(asctime)s %(levelname)s %(message)s')
     logging.info('=====================')
-    cwd = os.getcwd()
-    parent_dir = os.path.dirname(os.getcwd())
-    parent2_dir = os.path.dirname(parent_dir)
     config = load_config()
-    config = install(config, parent2_dir)
+    config = install(config, 'C:/HdM-DT')
     write_config(config)
