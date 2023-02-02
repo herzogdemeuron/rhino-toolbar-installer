@@ -86,7 +86,20 @@ def collect_libs(search_dir):
     
     return libs
 
+# def match_entry(search_list, search_string):
+#     entryMatch = None
+#     for item in search_list:
+#         if item.get("key") == search_string
+#         print(item.attrib)
+#         if search_string in item.attrib.values():
+#             entryMatch = item
+#             break
+#         if not search_string in item.attrib.values():
+#             return match_entry(list(item), search_list)
+    
+#     return entryMatch
 
+        
 def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
     """
     Add new values to an xml file under a specific tag.
@@ -110,14 +123,7 @@ def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
 
     #test if tag exists in xml file
     xmlRoot = xmlTree.getroot()
-    entryMatch = None
-    for element in xmlRoot.findall("./settings"):
-        childs = list(element)
-        for child in childs:
-            entries = list(child)
-            for entry in entries:
-                if entry.items()[0][1] == tag:
-                    entryMatch = entry
+    entryMatch = xmlRoot.find(".//entry[@key='RuiFiles']")
     
     if entryMatch != None:
         ruis = set(value.text for value in entryMatch[0])
