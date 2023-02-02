@@ -269,5 +269,5 @@ if __name__ == "__main__":
                         format='%(asctime)s %(levelname)s %(message)s')
     logging.info('=====================')
     config = load_config()
-    config = install(config, 'C:/HdM-DT')
+    config = install(config, 'C:\\HdM-DT')
     write_config(config)
