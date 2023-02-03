@@ -29,8 +29,8 @@ import json
 import logging
 
 
-def load_config():
-    config_path = './rhinoToolbarsConfig.json'
+def load_config(directory):
+    config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
     if os.path.isfile(config_path):
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -45,8 +45,9 @@ def load_config():
     ]
     return config
 
-def write_config(config):
-    with open('./rhinoToolbarsConfig.json', 'w') as f:
+def write_config(directory, config):
+    config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
+    with open(config_path, 'w') as f:
         f.write(json.dumps(config))
 
 def collect_ruis(search_dir):
@@ -212,7 +213,7 @@ def install(config, search_dir):
     remove_libs = config.get('libs', None)
     if remove_libs:
         logging.info("install.install / Remove Libs: {}".format(remove_libs))
-        
+
     new_ruis = collect_ruis(search_dir)
     logging.info("install.install / New Ruis: {}".format(new_ruis))
     remove_ruis = config.get('ruis', None)
@@ -249,9 +250,11 @@ def install(config, search_dir):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='install.log', level=logging.INFO,
+    directory = os.path.dirname(__file__)
+    logfile = os.path.join(directory, 'install.log')
+    logging.basicConfig(filename=logfile, level=logging.INFO,
                         format='%(asctime)s %(levelname)s %(message)s')
     logging.info('=====================')
-    config = load_config()
+    config = load_config(directory)
     config = install(config, 'C:\\HdM-DT')
-    write_config(config)
+    write_config(directory, config)
