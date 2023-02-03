@@ -86,27 +86,12 @@ def collect_libs(search_dir):
     
     return libs
 
-# def match_entry(search_list, search_string):
-#     entryMatch = None
-#     for item in search_list:
-#         if item.get("key") == search_string
-#         print(item.attrib)
-#         if search_string in item.attrib.values():
-#             entryMatch = item
-#             break
-#         if not search_string in item.attrib.values():
-#             return match_entry(list(item), search_list)
-    
-#     return entryMatch
-
-        
-def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
+def xml_add_settings_toolbar(filepath, new_ruis, remove_ruis):
     """
     Add new values to an xml file under a specific tag.
     Performs boolean operations on the remove_ruis vs new_ruis to figure out which entries to keep, remove or add.
 
     Args:
-        tag (str): The name of the tag to add the new value to.
         filepath (str): The path to the xml file.
         new_ruis (list[str]): The values to be added to the xml file.
         remove_ruis (list[str]): The values to remove before adding new ones to the xml file.
@@ -121,7 +106,7 @@ def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
         logging.info("install.xml_add_settings_toolbar / Parse error!")
         return False
 
-    #test if tag exists in xml file
+    # get RuiFiles entry
     xmlRoot = xmlTree.getroot()
     entryMatch = xmlRoot.find(".//entry[@key='RuiFiles']")
     
@@ -144,13 +129,12 @@ def xml_add_settings_toolbar(tag, filepath, new_ruis, remove_ruis):
     xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
     return
 
-def xml_add_settings_lib(tag, filepath, new_paths, remove_paths=None):
+def xml_add_settings_lib(filepath, new_paths, remove_paths=None):
     """
     Add new values to an xml file under a specific tag or create a new tag if it doesn't exist.
     Performs boolean operations on the remove_paths vs new_paths to figure out which entries to keep, remove or add.
 
     Args:
-        tag (str): The name of the tag to add the new value to or the name of the tag to be created.
         filepath (str): The path to the xml file.
         new_paths (list[str]): The values to be added to the xml file.
         remove_paths (list[str], optional): The values to be removed from the xml file before adding new ones.
@@ -168,23 +152,17 @@ def xml_add_settings_lib(tag, filepath, new_paths, remove_paths=None):
 
     #test if tag exists in xml file
     xmlRoot = xmlTree.getroot()
-    entryMatch = None
-    for element in xmlRoot.findall("./settings"):
-        entries = list(element)
-        for entry in entries:
-            if entry.items()[0][1] == tag:
-                entryMatch = entry
+    entryMatch = xmlRoot.find(".//entry[@key='SearchPaths']")
 
     # if the xml entry is not found, creates new xml entry
     if entryMatch == None:
-        logging.info("install.xml_add_settings_lib / " + tag + " not found in xml file")
-        newValue = ET.Element("entry", {"key":tag})
-        newValue.text = ';'.join(new_paths)
-        element.append(newValue)
-        xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
-        logging.info("install.xml_add_settings_lib / " + tag + " entry created")
-        return
-    
+        settings = xmlRoot.find("./settings")
+        settings.append(ET.Element("entry", {"key":"SearchPaths"}))
+        logging.info("install.xml_add_settings_lib / 'SearchPaths' entry created")
+
+        # get newly created SearchPath entry. Not sure if this is needed of of new entry could be used directly.
+        entryMatch = xmlRoot.find(".//entry[@key='SearchPaths']")
+
     # write lib path to xml file
     if entryMatch.text != None:
         search_paths = set(entryMatch.text.split(';'))
@@ -230,9 +208,11 @@ def install(config, search_dir):
     logging.info("install.install / Installing RhinoToolbar...")
     new_libs = collect_libs(search_dir)
     logging.info("install.install / New Libs: {}".format(new_libs))
+
     remove_libs = config.get('libs', None)
     if remove_libs:
         logging.info("install.install / Remove Libs: {}".format(remove_libs))
+        
     new_ruis = collect_ruis(search_dir)
     logging.info("install.install / New Ruis: {}".format(new_ruis))
     remove_ruis = config.get('ruis', None)
@@ -249,8 +229,7 @@ def install(config, search_dir):
         if not os.path.isfile(toolbarsXML):
             logging.warning("No toolbar xml detected, Rhino never started. Toolbar not installed.")
         else:
-            xml_add_settings_toolbar(
-                "RuiFiles", toolbarsXML, new_ruis, remove_ruis)
+            xml_add_settings_toolbar(toolbarsXML, new_ruis, remove_ruis)
 
         if os.path.exists(ironPythonXMLdir):
             logging.info("install.install / IronPython xml folder path already exists.")
@@ -261,8 +240,7 @@ def install(config, search_dir):
         if not os.path.isfile(ironPythonXML):
             xml_write_lib(ironPythonXML, default_search_path=new_libs[0])
 
-        xml_add_settings_lib(
-            "SearchPaths", ironPythonXML, new_libs, remove_libs)
+        xml_add_settings_lib(ironPythonXML, new_libs, remove_libs)
     
     config['libs'] = new_libs
     config['ruis'] = new_ruis
