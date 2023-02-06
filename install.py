@@ -250,7 +250,8 @@ def install(config, search_dir):
 
 
 if __name__ == "__main__":
-    directory = os.path.dirname(__file__)
+    currentFile = os.path.abspath(__file__)
+    directory = os.path.dirname(currentFile)
     logfile = os.path.join(directory, 'install.log')
     logging.basicConfig(filename=logfile, level=logging.INFO,
                         format='%(asctime)s %(levelname)s %(message)s')
