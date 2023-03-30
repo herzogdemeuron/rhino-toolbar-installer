@@ -5,4 +5,4 @@
 
 Run the install.py manually or by any other automated method.
 
-In Rhino: Right-click on any toolbar>Show Toolbar>Check toolbar you want to show. All HdM toolbars on GibHub are hidden by default.
+In Rhino: Right-click on any toolbar>Show Toolbar>Check toolbar you want to show. All HdM toolbars on GitHub are hidden by default.
