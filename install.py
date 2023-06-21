@@ -31,11 +31,13 @@ import logging
 
 def load_config(directory):
     config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
+    config = dict()
     if os.path.isfile(config_path):
         with open(config_path, 'r') as f:
-            config = json.load(f)
-    else:
-        config = {}
+            try:
+                config = json.load(f)
+            except json.JSONDecodeError:
+                logging.error("install.load_config / JSONDecodeError / Using default config.")
 
     config[ "rhinoVersionPaths"] =  [
         {
