@@ -1,20 +1,17 @@
 """
 Objectives:
     
-    Add or edit two xml files.
+    Add or edit xml flies for automatic Rhino configuration
     
 0)  Load a rhinoToolbarsConfig.json that contains libs and ruis previously added to xmls with this installer.
 
-1)  Add the path to a .rui to a rhino version specific xml file.
-    Rhino will load whatever rui's are specified in the xml.
-    In Rhino:
-        File>Properties>Toolbars>Files
-
-2)  Add the path to a lib to a rhino-version specific xml file.
+1)  Add the path to a lib to a rhino-version specific xml file.
     Rhino will load the specified module and make it availabe in the python execution environment (or python editor) - make more precise.
     In Rhino:
         EditPythonScript>Tools>Options>Modules Search Paths
-        
+
+2)  Add all startup scripts to the xml 
+
 Step by step:
 
     PC has rhino installed. You start your Rhino for the first time and this script will create the lib xml file.
@@ -27,6 +24,61 @@ import os
 import xml.etree.ElementTree as ET 
 import json
 import logging
+import shutil
+
+"""
+Installs RhinoHealth and RhinoSpeed by adding the path to their .rvb to an xml file.
+"""
+
+PYTHON_FOLDER_PATH = os.path.join(os.getenv('APPDATA'), "McNeel/Rhinoceros/7.0/Plug-ins/RhinoScript (1c7a3523-9a8f-4cec-a8e0-310f580536a7)/settings")
+PYTHON_XML_PATH = os.path.expandvars(PYTHON_FOLDER_PATH + '/settings-Scheme__Default.xml')
+BACKUP_EXTENSION = ".toolbar-install.bak"
+
+def xml_write_startup():
+    # HARD CODED
+    # CHECK OF CURRENT CONTENT NOT IMPLEMENTED - FILE IS ALWAYS OVERWRITTEN
+    # Default pythonlib xml
+    pythonlib_xml = '<?xml version="1.0" encoding="utf-8"?>\n\
+    <settings id="2.0">\n\t\
+    <settings>\n\t\t\
+        <entry key="ReinitializeEngine">True</entry>\n\t\t\
+        <entry key="RecentFilePath">C:\HdM-DT\HdmRhinoToolbar\\rhino-health\</entry>\n\t\t\
+        <entry key="StartupFileList">\n\t\t\t\
+        <list>\n\t\t\t\t\
+            <value>C:\HdM-DT\HdmRhinoToolbar\\rhino-health\StartupRhinoSpeed.rvb</value>\n\t\t\t\
+            <value>C:\HdM-DT\HdmRhinoToolbar\\rhino-health\StartupRhinoHealth.rvb</value>\n\t\t\t\
+        </list>\n\t\t\
+        </entry>\n\t\t\
+        <entry key="RecentFileListCount">0</entry>\n\t\t\
+        <entry key="StartupFileListCount">1</entry>\n\t\
+    </settings>\n\
+    </settings>'
+
+    print ("install.xml_write_lib / SUCCESS: Lib xml created.")
+
+    f = open(PYTHON_XML_PATH, 'w')
+    f.write(pythonlib_xml)
+    f.close()
+    return True
+
+def install_hdmstartup():
+
+    # run xml edit
+    if os.path.exists(PYTHON_FOLDER_PATH):
+        print("install.install_hdmstartup / INFO: xml folder path exists.")
+    else:
+        os.makedirs(PYTHON_FOLDER_PATH)
+    # BACKUP CREATION
+    if os.path.isfile(PYTHON_XML_PATH) and not os.path.isfile(PYTHON_XML_PATH+BACKUP_EXTENSION):
+        shutil.copy(PYTHON_XML_PATH, PYTHON_XML_PATH+BACKUP_EXTENSION)
+    if xml_write_startup():
+        return True
+
+    print ("install.install_hdmstartup / INFO: No changes made to lib xml.")
+
+    return True
+
+
 
 
 def load_config(directory):
@@ -41,7 +93,6 @@ def load_config(directory):
 
     config[ "rhinoVersionPaths"] =  [
         {
-        "toolbarsXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/Toolbars (dc297053-96c0-4883-a688-8326b4e024a8)/settings",
         "ironPythonXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/IronPython (814d908a-e25c-493d-97e9-ee3861957f49)/settings"
         }
     ]
@@ -51,24 +102,6 @@ def write_config(directory, config):
     config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
     with open(config_path, 'w') as f:
         f.write(json.dumps(config))
-
-def collect_ruis(search_dir):
-    """
-    Searches for all files ending with '.rui' in give directory tree.
-
-    Args:
-        search_dir (str): The root directory to start searching from.
-
-    Returns:
-        list[str]: A list of file paths.
-    """
-    ruis = []
-    for root, dirs, files in os.walk(search_dir):
-        for file in files:
-            if file.endswith(".rui"):
-                ruis.append(os.path.join(root, file))
-
-    return ruis
 
 def collect_libs(search_dir):
     """
@@ -88,49 +121,6 @@ def collect_libs(search_dir):
                 libs.append(os.path.join(root, directory))
     
     return libs
-
-def xml_add_settings_toolbar(filepath, new_ruis, remove_ruis):
-    """
-    Add new values to an xml file under a specific tag.
-    Performs boolean operations on the remove_ruis vs new_ruis to figure out which entries to keep, remove or add.
-
-    Args:
-        filepath (str): The path to the xml file.
-        new_ruis (list[str]): The values to be added to the xml file.
-        remove_ruis (list[str]): The values to remove before adding new ones to the xml file.
-
-    Returns:
-        bool: Return True if the new value is added successfully and False otherwise.
-    """
-    #enter xml file
-    try:
-        xmlTree = ET.parse(filepath)
-    except:
-        logging.info("install.xml_add_settings_toolbar / Parse error!")
-        return False
-
-    # get RuiFiles entry
-    xmlRoot = xmlTree.getroot()
-    entryMatch = xmlRoot.find(".//entry[@key='RuiFiles']")
-    
-    if entryMatch != None:
-        ruis = set(value.text for value in entryMatch[0])
-        if remove_ruis:
-            ruis = ruis - set(remove_ruis)
-        ruis = ruis | set(new_ruis)
-    else:
-        logging.info("install.xml_add_settings_toolbar / No entry '{}' found. No changes made to toolbar xml.".format(tag))
-        return
-
-    entryMatch[0].clear()
-    # add new value to xml file
-    for rui in ruis:
-        newValue = ET.Element("value")
-        newValue.text = rui
-        newValue = entryMatch[0].append(newValue)
-
-    xmlTree.write(filepath, encoding='utf-8', xml_declaration=True)
-    return
 
 def xml_add_settings_lib(filepath, new_paths, remove_paths=None):
     """
@@ -216,23 +206,23 @@ def install(config, search_dir):
     if remove_libs:
         logging.info("install.install / Remove Libs: {}".format(remove_libs))
 
-    new_ruis = collect_ruis(search_dir)
-    logging.info("install.install / New Ruis: {}".format(new_ruis))
-    remove_ruis = config.get('ruis', None)
-    if remove_ruis:
-        logging.info("install.install / Remove Ruis: {}".format(remove_ruis))
+    #new_ruis = collect_ruis(search_dir)
+    #logging.info("install.install / New Ruis: {}".format(new_ruis))
+    #remove_ruis = config.get('ruis', None)
+    #if remove_ruis:
+    #    logging.info("install.install / Remove Ruis: {}".format(remove_ruis))
 
     for version in config['rhinoVersionPaths']:
-        toolbarsXMLdir = os.path.join(os.getenv('APPDATA'), version['toolbarsXMLdir'])
-        toolbarsXML = os.path.expandvars(toolbarsXMLdir + '/settings-Scheme__Default.xml')
+        #toolbarsXMLdir = os.path.join(os.getenv('APPDATA'), version['toolbarsXMLdir'])
+        #toolbarsXML = os.path.expandvars(toolbarsXMLdir + '/settings-Scheme__Default.xml')
 
         ironPythonXMLdir = os.path.join(os.getenv('APPDATA'), version['ironPythonXMLdir'])
         ironPythonXML = os.path.expandvars(ironPythonXMLdir + '/settings-Scheme__Default.xml')
 
-        if not os.path.isfile(toolbarsXML):
-            logging.warning("No toolbar xml detected, Rhino never started. Toolbar not installed.")
-        else:
-            xml_add_settings_toolbar(toolbarsXML, new_ruis, remove_ruis)
+        #if not os.path.isfile(toolbarsXML):
+        #    logging.warning("No toolbar xml detected, Rhino never started. Toolbar not installed.")
+        #else:
+        #    xml_add_settings_toolbar(toolbarsXML, new_ruis, remove_ruis)
 
         if os.path.exists(ironPythonXMLdir):
             logging.info("install.install / IronPython xml folder path already exists.")
