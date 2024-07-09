@@ -268,3 +268,15 @@ if __name__ == "__main__":
     #------------------------
 
     xml_write_startup()
+
+
+    ### IDEA: Create new Startup script that cloeses and opens the HdM rui. Maybe date check.
+    ### CLosing is solved
+    # import Rhino.RhinoApp as app
+
+    # for file in app.ToolbarFiles:
+    #     print(file.Name)
+    #     if "HdM" in file.Name:
+    #         print("closing toolbar {}".format(file.Name))
+    #         file.Close(False)
+    #         break
