@@ -30,7 +30,7 @@ import shutil
 Installs RhinoHealth and RhinoSpeed by adding the path to their .rvb to an xml file.
 """
 
-PYTHON_FOLDER_PATH = os.path.join(os.getenv('APPDATA'), "McNeel/Rhinoceros/7.0/Plug-ins/RhinoScript (1c7a3523-9a8f-4cec-a8e0-310f580536a7)/settings")
+PYTHON_FOLDER_PATH = os.path.join(os.getenv('APPDATA'), "McNeel/Rhinoceros/8.0/Plug-ins/RhinoScript (1c7a3523-9a8f-4cec-a8e0-310f580536a7)/settings")
 PYTHON_XML_PATH = os.path.expandvars(PYTHON_FOLDER_PATH + '/settings-Scheme__Default.xml')
 BACKUP_EXTENSION = ".toolbar-install.bak"
 
@@ -56,10 +56,21 @@ def xml_write_startup():
 
     print ("install.xml_write_lib / SUCCESS: Lib xml created.")
 
-    f = open(PYTHON_XML_PATH, 'w')
-    f.write(pythonlib_xml)
-    f.close()
-    return True
+
+    # Ensure the directory exists
+    if not os.path.exists(PYTHON_FOLDER_PATH):
+        os.makedirs(PYTHON_FOLDER_PATH)
+
+    # Create and write to the file
+    try:
+        with open(PYTHON_XML_PATH, 'w') as f:
+            f.write(pythonlib_xml)
+        print("File written successfully.")
+        result = True
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        result = False
+    return result
 
 def install_hdmstartup():
 
@@ -78,9 +89,6 @@ def install_hdmstartup():
 
     return True
 
-
-
-
 def load_config(directory):
     config_path = os.path.join(directory, 'rhinoToolbarsConfig.json')
     config = dict()
@@ -93,7 +101,7 @@ def load_config(directory):
 
     config[ "rhinoVersionPaths"] =  [
         {
-        "ironPythonXMLdir": "McNeel/Rhinoceros/7.0/Plug-ins/IronPython (814d908a-e25c-493d-97e9-ee3861957f49)/settings"
+        "ironPythonXMLdir": "McNeel/Rhinoceros/8.0/Plug-ins/IronPython (814d908a-e25c-493d-97e9-ee3861957f49)/settings"
         }
     ]
     return config
@@ -236,9 +244,14 @@ def install(config, search_dir):
         xml_add_settings_lib(ironPythonXML, new_libs, remove_libs)
     
     config['libs'] = new_libs
-    config['ruis'] = new_ruis
+    #config['ruis'] = new_ruis
 
     return config
+
+
+def install_toolbar():
+    
+    # TEST
 
 
 if __name__ == "__main__":
@@ -251,3 +264,7 @@ if __name__ == "__main__":
     config = load_config(directory)
     config = install(config, 'C:\\HdM-DT')
     write_config(directory, config)
+    
+    #------------------------
+
+    xml_write_startup()
