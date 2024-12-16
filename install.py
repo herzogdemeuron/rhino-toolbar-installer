@@ -251,32 +251,32 @@ def install(config, search_dir):
 
 def install_toolbar():
     
-    # TEST
+        # TEST
 
 
-if __name__ == "__main__":
-    currentFile = os.path.abspath(__file__)
-    directory = os.path.dirname(currentFile)
-    logfile = os.path.join(directory, 'install.log')
-    logging.basicConfig(filename=logfile, level=logging.INFO,
-                        format='%(asctime)s %(levelname)s %(message)s')
-    logging.info('=====================')
-    config = load_config(directory)
-    config = install(config, 'C:\\HdM-DT')
-    write_config(directory, config)
-    
-    #------------------------
+    if __name__ == "__main__":
+        currentFile = os.path.abspath(__file__)
+        directory = os.path.dirname(currentFile)
+        logfile = os.path.join(directory, 'install.log')
+        logging.basicConfig(filename=logfile, level=logging.INFO,
+                            format='%(asctime)s %(levelname)s %(message)s')
+        logging.info('=====================')
+        config = load_config(directory)
+        config = install(config, 'C:\\HdM-DT')
+        write_config(directory, config)
+        
+        #------------------------
 
-    xml_write_startup()
+        xml_write_startup()
 
 
-    ### IDEA: Create new Startup script that cloeses and opens the HdM rui. Maybe date check.
-    ### CLosing is solved
-    # import Rhino.RhinoApp as app
+        ### IDEA: Create new Startup script that cloeses and opens the HdM rui. Maybe date check.
+        ### CLosing is solved
+        # import Rhino.RhinoApp as app
 
-    # for file in app.ToolbarFiles:
-    #     print(file.Name)
-    #     if "HdM" in file.Name:
-    #         print("closing toolbar {}".format(file.Name))
-    #         file.Close(False)
-    #         break
+        # for file in app.ToolbarFiles:
+        #     print(file.Name)
+        #     if "HdM" in file.Name:
+        #         print("closing toolbar {}".format(file.Name))
+        #         file.Close(False)
+        #         break
