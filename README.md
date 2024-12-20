@@ -1,4 +1,6 @@
-# rhino-toolbar-installer
+# rhino-toolbar-installer (OBSOLETE)
+This method only works for Rhino 7
+  
 *Generic installer for adding repository-based toolbars to Rhino. It collects all 'lib' folders and all '.rui' files in it's parent directory and all subdirectories thereof and adds their paths to the respective xml file in the Rhino plug-ins folder.*
 
 **How to use:**
